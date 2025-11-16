@@ -1,0 +1,920 @@
+/* Chi Nhánh Container */
+.chinhanh-container {
+  padding: 20px;
+  background: #f5f7fa;
+  min-height: 100vh;
+}
+
+/* Header */
+.chinhanh-header {
+  margin-bottom: 30px;
+}
+
+.chinhanh-header h1 {
+  font-size: 28px;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.chinhanh-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+/* Stat Cards */
+.stat-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
+.stat-card h3 {
+  font-size: 36px;
+  font-weight: bold;
+  color: #667eea;
+  margin: 0 0 10px 0;
+}
+
+.stat-card p {
+  color: #6c757d;
+  margin: 0;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-card-detail {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.stat-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.stat-detail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stat-number {
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+}
+
+.stat-label {
+  font-size: 11px;
+  opacity: 0.9;
+  margin-top: 5px;
+}
+
+.stat-card-title {
+  color: white !important;
+  opacity: 0.9;
+  text-align: center;
+  font-weight: 600;
+}
+
+/* Chi Nhánh List */
+.chinhanh-list-section {
+  margin-bottom: 30px;
+}
+
+.chinhanh-list-section h2 {
+  font-size: 20px;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.chinhanh-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.chinhanh-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.chinhanh-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-color: #667eea;
+}
+
+.chinhanh-card.selected {
+  border-color: #667eea;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+}
+
+.chinhanh-card-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chinhanh-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.chinhanh-card-body {
+  padding: 20px;
+}
+
+.chinhanh-card-body p {
+  margin: 10px 0;
+  color: #495057;
+  font-size: 14px;
+}
+
+.chinhanh-card-body strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* Chi Nhánh Detail */
+.chinhanh-detail-section {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  animation: fadeIn 0.3s ease;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.detail-header h2 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+}
+
+.btn-close {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #e9ecef;
+  color: #495057;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-close:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.chinhanh-info-section {
+  margin-bottom: 30px;
+}
+
+.chinhanh-info-section h3 {
+  color: #2c3e50;
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 15px;
+}
+
+.info-item {
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.info-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.info-item strong {
+  color: #495057;
+  font-weight: 600;
+  margin-right: 8px;
+}
+
+/* Nhân Viên Grid */
+.nhanvien-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.nhanvien-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.nhanvien-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  border-color: #667eea;
+}
+
+.nhanvien-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.nhanvien-header h4 {
+  margin: 0 0 5px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.nhanvien-manv {
+  font-size: 13px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.nhanvien-body {
+  padding: 20px;
+}
+
+.nhanvien-info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.nhanvien-info-row:last-of-type {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.info-value {
+  color: #2c3e50;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.nhanvien-contact {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 2px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #495057;
+}
+
+.contact-item span:first-child {
+  font-size: 16px;
+}
+
+/* Import common styles from Kho.css */
+.detail-section {
+  margin-top: 30px;
+}
+
+.detail-section h3 {
+  color: #2c3e50;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+/* Tồn kho section */
+.tonkho-section {
+  margin-top: 30px;
+}
+
+.tonkho-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.tonkho-header h3 {
+  margin: 0;
+}
+
+.tonkho-stats-mini {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.stat-mini {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 3px solid #6c757d;
+  min-width: 100px;
+}
+
+.stat-mini.success {
+  background: #d4edda;
+  border-left-color: #28a745;
+}
+
+.stat-mini.warning {
+  background: #fff3cd;
+  border-left-color: #ffc107;
+}
+
+.stat-mini.danger {
+  background: #f8d7da;
+  border-left-color: #dc3545;
+}
+
+.stat-mini-label {
+  font-size: 11px;
+  color: #6c757d;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.stat-mini-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+}
+
+/* Tabs */
+.tonkho-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.tab-btn {
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6c757d;
+  transition: all 0.3s ease;
+  position: relative;
+  top: 2px;
+}
+
+.tab-btn:hover {
+  color: #495057;
+  background: #f8f9fa;
+}
+
+.tab-btn.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+  font-weight: 600;
+}
+
+/* Filters */
+.tonkho-filters {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tonkho-filters label {
+  font-weight: 500;
+  color: #495057;
+  white-space: nowrap;
+}
+
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  font-size: 14px;
+  min-width: 180px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-clear-filter {
+  padding: 8px 16px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.btn-clear-filter:hover {
+  background: #5a6268;
+}
+
+/* Table styles */
+.tonkho-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tonkho-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.tonkho-table thead {
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.tonkho-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tonkho-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+.tonkho-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.tonkho-table tbody tr.row-warning {
+  background: #fff3cd;
+}
+
+.tonkho-table tbody tr.row-warning:hover {
+  background: #ffe69c;
+}
+
+.tonkho-table tbody tr.row-danger {
+  background: #f8d7da;
+}
+
+.tonkho-table tbody tr.row-danger:hover {
+  background: #f5c6cb;
+}
+
+.tonkho-table td {
+  padding: 12px;
+  font-size: 14px;
+  color: #495057;
+}
+
+.tonkho-table td.number {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.tonkho-table .product-name {
+  font-weight: 500;
+  color: #212529;
+}
+
+.icon-warning {
+  margin-left: 5px;
+  font-size: 14px;
+}
+
+.text-right {
+  text-align: right !important;
+}
+
+.text-center {
+  text-align: center !important;
+}
+
+/* Expand Button */
+.btn-expand {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: #e9ecef;
+  color: #495057;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-expand:hover {
+  background: #667eea;
+  color: white;
+}
+
+/* Expanded Row */
+.expanded-row {
+  background: #f8f9fa !important;
+  border-top: none !important;
+}
+
+.expanded-row:hover {
+  background: #f8f9fa !important;
+}
+
+.expanded-content {
+  padding: 20px;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.requirement-section h4 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.requirement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 15px;
+}
+
+.requirement-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 12px 15px;
+  background: white;
+  border-radius: 6px;
+  border-left: 3px solid #667eea;
+}
+
+.requirement-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6c757d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.requirement-value {
+  font-size: 14px;
+  color: #212529;
+  font-weight: 500;
+}
+
+/* Theo lô styles */
+.tonkho-theolo-container {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.product-lo-group {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.product-lo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.product-lo-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.product-code {
+  font-size: 13px;
+  opacity: 0.9;
+  font-weight: 400;
+}
+
+.lo-count {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lo-table-wrapper {
+  overflow-x: auto;
+}
+
+.lo-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.lo-table thead {
+  background: #f8f9fa;
+}
+
+.lo-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.lo-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.lo-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.lo-table td {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #495057;
+}
+
+.lo-table td.number {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 12px;
+  letter-spacing: 0.5px;
+}
+
+.badge-success {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge-warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.badge-danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.badge-secondary {
+  background: #e9ecef;
+  color: #6c757d;
+}
+
+/* Loading & No Data */
+.loading {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #6c757d;
+  font-style: italic;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+.error-alert {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 15px 20px;
+  border-radius: 8px;
+  border-left: 4px solid #dc3545;
+  margin-bottom: 20px;
+}
+
+.btn-retry {
+  padding: 10px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.btn-retry:hover {
+  background: #5568d3;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .tonkho-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .tonkho-stats-mini {
+    width: 100%;
+  }
+  
+  .stat-mini {
+    flex: 1;
+    min-width: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .chinhanh-container {
+    padding: 10px;
+  }
+  
+  .chinhanh-header h1 {
+    font-size: 22px;
+  }
+  
+  .chinhanh-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-detail-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chinhanh-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .nhanvien-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tonkho-tabs {
+    flex-direction: column;
+  }
+  
+  .tab-btn {
+    width: 100%;
+    text-align: left;
+  }
+  
+  .tonkho-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-select {
+    width: 100%;
+  }
+  
+  .btn-clear-filter {
+    margin-left: 0;
+    width: 100%;
+  }
+}

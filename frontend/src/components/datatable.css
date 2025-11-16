@@ -1,0 +1,8 @@
+.dt-root { padding: 16px }
+.dt-title { margin: 0 0 12px 0; color: #0f172a }
+.dt-table-wrap { overflow: auto; border-radius: 8px; border: 1px solid #e2e8f0 }
+.dt-table { width: 100%; border-collapse: collapse }
+.dt-table th, .dt-table td { padding: 8px 12px; border-bottom: 1px solid #eef2f6; text-align:left }
+.dt-table thead th { background:#f8fafc; position: sticky; top:0 }
+.dt-table tbody tr:hover { background:#fbfdff }
+.dt-loading, .dt-error, .dt-empty { padding: 20px }

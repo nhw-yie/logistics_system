@@ -1,0 +1,311 @@
+import React, { useState } from 'react';
+import { Warehouse, Store, Truck, Package, AlertTriangle, TrendingUp, MapPin, Users, BarChart3, Navigation, X, Calendar, Thermometer, Box, Layers, Clock, ArrowRight } from 'lucide-react';
+
+const SupplyChainDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedWarehouse, setSelectedWarehouse] = useState(null);
+  const [showBatchModal, setShowBatchModal] = useState(false);
+  const [selectedBatch, setSelectedBatch] = useState(null);
+
+  // Mock data
+  const warehouses = [
+    { 
+      id: 'KHO-C001', 
+      name: 'Kho Trung Tâm Quận 7', 
+      type: 'Kho Chính', 
+      capacity: 50000, 
+      current: 38500, 
+      status: 'active', 
+      branches: 2, 
+      temp: ['-20°C', '25°C'],
+      lat: 10.7308,
+      lng: 106.7054,
+      address: '123 Đường Số 7, Tân Thuận Đông, Q7',
+      zones: [
+        { id: 'KC001-A1', name: 'Khu Đông Lạnh A1', temp: -20, capacity: 8000, current: 6500, type: 'Đông lạnh' },
+        { id: 'KC001-B1', name: 'Khu Lạnh Thực Phẩm Tươi', temp: 3, capacity: 6000, current: 4800, type: 'Lạnh' },
+        { id: 'KC001-C1', name: 'Khu Hàng Khô 1', temp: 25, capacity: 12000, current: 10200, type: 'Khô' },
+        { id: 'KC001-D1', name: 'Khu Đồ Uống', temp: 22, capacity: 4000, current: 3200, type: 'Khô' }
+      ],
+      staff: 45,
+      vehicles: 5
+    },
+    { 
+      id: 'KHO-V001', 
+      name: 'Kho Vùng Đông', 
+      type: 'Kho Vùng', 
+      capacity: 15000, 
+      current: 11200, 
+      status: 'active', 
+      branches: 3, 
+      temp: ['-20°C', '25°C'],
+      lat: 10.8702,
+      lng: 106.7625,
+      address: '456 Xa Lộ Hà Nội, Linh Trung, Thủ Đức',
+      zones: [
+        { id: 'KV001-A1', name: 'Khu Đông Lạnh', temp: -20, capacity: 3000, current: 2400, type: 'Đông lạnh' },
+        { id: 'KV001-B1', name: 'Khu Lạnh Tươi Sống', temp: 3, capacity: 2500, current: 2000, type: 'Lạnh' },
+        { id: 'KV001-C1', name: 'Khu Hàng Khô', temp: 25, capacity: 5000, current: 4200, type: 'Khô' }
+      ],
+      staff: 28,
+      vehicles: 3
+    },
+    { 
+      id: 'KHO-V002', 
+      name: 'Kho Vùng Tây', 
+      type: 'Kho Vùng', 
+      capacity: 12000, 
+      current: 9800, 
+      status: 'active', 
+      branches: 2, 
+      temp: ['-20°C', '25°C'],
+      lat: 10.7544,
+      lng: 106.5972,
+      address: '789 Quốc Lộ 1A, Tân Tạo, Bình Tân',
+      zones: [
+        { id: 'KV002-A1', name: 'Khu Đông Lạnh', temp: -20, capacity: 2500, current: 2100, type: 'Đông lạnh' },
+        { id: 'KV002-B1', name: 'Khu Lạnh Tổng Hợp', temp: 4, capacity: 2000, current: 1600, type: 'Lạnh' },
+        { id: 'KV002-C1', name: 'Khu Hàng Khô', temp: 25, capacity: 4500, current: 3800, type: 'Khô' }
+      ],
+      staff: 22,
+      vehicles: 3
+    },
+    { 
+      id: 'KHO-H001', 
+      name: 'Kho Hậu Cần Q1', 
+      type: 'Hậu Cần', 
+      capacity: 3000, 
+      current: 2100, 
+      status: 'active', 
+      branches: 2, 
+      temp: ['3°C', '25°C'],
+      lat: 10.7869,
+      lng: 106.6881,
+      address: '234 Nguyễn Thị Minh Khai, P6, Q3',
+      zones: [
+        { id: 'KH001-A1', name: 'Khu Lạnh Nhanh', temp: 3, capacity: 800, current: 650, type: 'Lạnh' },
+        { id: 'KH001-B1', name: 'Khu Hàng Nhanh', temp: 25, capacity: 1200, current: 980, type: 'Khô' }
+      ],
+      staff: 12,
+      vehicles: 2
+    },
+    { 
+      id: 'KHO-H002', 
+      name: 'Kho Hậu Cần TB', 
+      type: 'Hậu Cần', 
+      capacity: 2500, 
+      current: 1800, 
+      status: 'active', 
+      branches: 0, 
+      temp: ['4°C', '25°C'],
+      lat: 10.7994,
+      lng: 106.6531,
+      address: '567 Hoàng Văn Thụ, P4, Tân Bình',
+      zones: [
+        { id: 'KH002-A1', name: 'Khu Lạnh Express', temp: 4, capacity: 700, current: 580, type: 'Lạnh' },
+        { id: 'KH002-B1', name: 'Khu Hàng Khô Nhanh', temp: 25, capacity: 1000, current: 820, type: 'Khô' }
+      ],
+      staff: 10,
+      vehicles: 2
+    }
+  ];
+
+  const branches = [
+    { id: 'CN-001', name: 'CN Nguyễn Huệ', district: 'Q1', stock: 950, orders: 45, status: 'active', lat: 10.7740, lng: 106.7017, address: '88 Nguyễn Huệ, Bến Nghé, Q1' },
+    { id: 'CN-002', name: 'CN Phú Mỹ Hưng', district: 'Q7', stock: 880, orders: 38, status: 'active', lat: 10.7295, lng: 106.7256, address: '20 Nguyễn Lương Bằng, Tân Phú, Q7' },
+    { id: 'CN-003', name: 'CN Thủ Đức', district: 'Thủ Đức', stock: 920, orders: 52, status: 'active', lat: 10.8508, lng: 106.7619, address: '123 Võ Văn Ngân, Linh Chiểu, Thủ Đức' },
+    { id: 'CN-004', name: 'CN Bình Thạnh', district: 'Bình Thạnh', stock: 650, orders: 28, status: 'warning', lat: 10.8014, lng: 106.7108, address: '456 Xô Viết Nghệ Tĩnh, P25, Bình Thạnh' },
+    { id: 'CN-005', name: 'CN Tân Bình', district: 'Tân Bình', stock: 980, orders: 41, status: 'active', lat: 10.7992, lng: 106.6444, address: '789 Cộng Hòa, P13, Tân Bình' },
+  ];
+
+  const trucks = [
+    { id: 'XE01', plate: '51C-10001', driver: 'Lưu Văn L', route: 'KHO-C001 → KHO-V001', status: 'in_transit', eta: '45 phút', load: 85, lat: 10.8000, lng: 106.7200 },
+    { id: 'XE02', plate: '51C-10002', driver: 'Phạm Minh M', route: 'KHO-C001 → KHO-V002', status: 'in_transit', eta: '2.5 giờ', load: 92, lat: 10.7400, lng: 106.6500 },
+    { id: 'XE03', plate: '51C-20001', driver: 'Bùi Anh N', route: 'KHO-V001 → CN-001', status: 'loading', eta: '-', load: 45, lat: 10.8702, lng: 106.7625 },
+    { id: 'XE04', plate: '51C-20002', driver: 'Đinh Công P', route: 'Đang chờ', status: 'idle', eta: '-', load: 0, lat: 10.7308, lng: 106.7054 },
+    { id: 'XE05', plate: '51C-30001', driver: 'Nguyễn Văn Q', route: 'KHO-V002 → CN-005', status: 'in_transit', eta: '30 phút', load: 78, lat: 10.7700, lng: 106.6300 },
+  ];
+
+  const batches = [
+    { id: 'LO-001', product: 'Thịt ba chỉ heo', warehouse: 'KHO-V001', zone: 'KV001-B1', qty: 500, unit: 'kg', mfg: '2024-10-28', exp: '2024-11-04', status: 'good', daysLeft: 3 },
+    { id: 'LO-006', product: 'Cá hồi Na Uy phi lê', warehouse: 'CN-002', zone: 'Khu lạnh', qty: 150, unit: 'kg', mfg: '2024-10-28', exp: '2024-11-02', status: 'near_expiry', daysLeft: 1 },
+    { id: 'LO-012', product: 'Cà chua bi', warehouse: 'KHO-V001', zone: 'KV001-B1', qty: 400, unit: 'kg', mfg: '2024-10-27', exp: '2024-11-03', status: 'near_expiry', daysLeft: 2 },
+    { id: 'LO-016', product: 'Cá hồi đông lạnh 500g', warehouse: 'KHO-C001', zone: 'KC001-A1', qty: 800, unit: 'hộp', mfg: '2024-09-15', exp: '2025-09-15', status: 'good', daysLeft: 319 },
+    { id: 'LO-021', product: 'Sữa tươi Vinamilk 1L', warehouse: 'KHO-C001', zone: 'KC001-B2', qty: 1200, unit: 'hộp', mfg: '2024-10-25', exp: '2024-11-10', status: 'good', daysLeft: 9 },
+    { id: 'LO-026', product: 'Coca Cola lon 330ml', warehouse: 'KHO-C001', zone: 'KC001-D1', qty: 3000, unit: 'lon', mfg: '2024-08-01', exp: '2025-08-01', status: 'good', daysLeft: 274 },
+    { id: 'LO-036', product: 'Mì Hảo Hảo tôm chua cay', warehouse: 'KHO-C001', zone: 'KC001-C1', qty: 5000, unit: 'gói', mfg: '2024-08-01', exp: '2025-02-01', status: 'good', daysLeft: 92 },
+    { id: 'LO-003', product: 'Thịt bò thăn', warehouse: 'KHO-H001', zone: 'KH001-A1', qty: 200, unit: 'kg', mfg: '2024-10-27', exp: '2024-11-03', status: 'near_expiry', daysLeft: 2 },
+    { id: 'LO-018', product: 'Xúc xích đông lạnh 500g', warehouse: 'KHO-C001', zone: 'KC001-A1', qty: 1000, unit: 'gói', mfg: '2024-08-10', exp: '2025-08-10', status: 'good', daysLeft: 283 },
+    { id: 'LO-041', product: 'Nước mắm Chinsu 500ml', warehouse: 'KHO-V001', zone: 'KV001-C1', qty: 2000, unit: 'chai', mfg: '2024-06-01', exp: '2026-06-01', status: 'good', daysLeft: 578 },
+  ];
+
+  const getStatusColor = (status) => {
+    switch(status) {
+      case 'active': return 'bg-green-100 text-green-800 border-green-300';
+      case 'warning': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'in_transit': return 'bg-blue-100 text-blue-800 border-blue-300';
+      case 'loading': return 'bg-purple-100 text-purple-800 border-purple-300';
+      case 'idle': return 'bg-gray-100 text-gray-800 border-gray-300';
+      case 'good': return 'bg-green-100 text-green-800 border-green-300';
+      case 'near_expiry': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+      case 'expired': return 'bg-red-100 text-red-800 border-red-300';
+      default: return 'bg-gray-100 text-gray-800 border-gray-300';
+    }
+  };
+
+  const WarehouseDetailModal = ({ warehouse, onClose }) => {
+    if (!warehouse) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          {/* Header */}
+          <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">{warehouse.name}</h2>
+              <p className="text-blue-100 text-sm mt-1">{warehouse.id} • {warehouse.type}</p>
+            </div>
+            <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Overview Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                <p className="text-sm text-gray-600 mb-1">Công suất</p>
+                <p className="text-2xl font-bold text-blue-600">{((warehouse.current / warehouse.capacity) * 100).toFixed(1)}%</p>
+                <p className="text-xs text-gray-500 mt-1">{warehouse.current.toLocaleString()}㎥ / {warehouse.capacity.toLocaleString()}㎥</p>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4 border border-green-200">
+                <p className="text-sm text-gray-600 mb-1">Nhân viên</p>
+                <p className="text-2xl font-bold text-green-600">{warehouse.staff}</p>
+                <p className="text-xs text-gray-500 mt-1">Đang làm việc</p>
+              </div>
+              <div className="bg-purple-50 rounded-lg p-4 border border-purple-200">
+                <p className="text-sm text-gray-600 mb-1">Phương tiện</p>
+                <p className="text-2xl font-bold text-purple-600">{warehouse.vehicles}</p>
+                <p className="text-xs text-gray-500 mt-1">Xe tải phục vụ</p>
+              </div>
+              <div className="bg-orange-50 rounded-lg p-4 border border-orange-200">
+                <p className="text-sm text-gray-600 mb-1">Khu vực</p>
+                <p className="text-2xl font-bold text-orange-600">{warehouse.zones.length}</p>
+                <p className="text-xs text-gray-500 mt-1">Khu chứa hàng</p>
+              </div>
+            </div>
+
+            {/* Address & Info */}
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <MapPin className="w-5 h-5 text-gray-600 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-gray-900">Địa chỉ</p>
+                  <p className="text-sm text-gray-600">{warehouse.address}</p>
+                  <p className="text-xs text-gray-500 mt-1">Tọa độ: {warehouse.lat}, {warehouse.lng}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Zones */}
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
+                <Layers className="w-5 h-5" />
+                Các Khu Chứa Hàng
+              </h3>
+              <div className="space-y-3">
+                {warehouse.zones.map((zone) => {
+                  const percentage = ((zone.current / zone.capacity) * 100).toFixed(1);
+                  return (
+                    <div key={zone.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-gray-900">{zone.name}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              zone.type === 'Đông lạnh' ? 'bg-blue-100 text-blue-800' :
+                              zone.type === 'Lạnh' ? 'bg-cyan-100 text-cyan-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {zone.type}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">{zone.id}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-1 bg-blue-50 px-3 py-1 rounded">
+                            <Thermometer className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-semibold text-blue-600">{zone.temp}°C</span>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-gray-900">{percentage}%</p>
+                            <p className="text-xs text-gray-500">{zone.current.toLocaleString()}㎥</p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="mb-2">
+                        <div className="flex justify-between text-xs text-gray-600 mb-1">
+                          <span>Công suất</span>
+                          <span>{zone.capacity.toLocaleString()}㎥</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${
+                              percentage > 85 ? 'bg-red-500' : 
+                              percentage > 70 ? 'bg-yellow-500' : 
+                              'bg-green-500'
+                            }`}
+                            style={{width: `${percentage}%`}}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Batches in this warehouse */}
+            <div>
+              <h3 className="font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Lô Hàng Tại Kho ({batches.filter(b => b.warehouse === warehouse.id).length})
+              </h3>
+              <div className="space-y-2">
+                {batches.filter(b => b.warehouse === warehouse.id).slice(0, 5).map((batch) => (
+                  <div key={batch.id} 
+                       className={`border rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow ${
+                         batch.status === 'near_expiry' ? 'border-yellow-300 bg-yellow-50' : ''
+                       }`}
+                       onClick={() => { setSelectedBatch(batch); setShowBatchModal(true); }}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-gray-900">{batch.product}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full border ${getStatusColor(batch.status)}`}>
+                            {batch.status === 'near_expiry' ? 'Cận date' : 'Tốt'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">{batch.id} • {batch.zone}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-gray-900">{batch.qty} {batch.unit}</p>
+                        <p className="text-xs text-gray-500">HSD: {batch.exp}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {batches.filter(b => b.warehouse === warehouse.id).length > 5 && (
+                <button className="w-full mt-3 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                  Xem tất cả ({batches.filter(b => b.warehouse === warehouse.id).length} lô)
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };

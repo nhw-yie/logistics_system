@@ -1,0 +1,19 @@
+.sidebar {
+  width: 220px;
+  background: #0f172a;
+  color: #fff;
+  min-height: 100vh;
+  padding: 16px;
+  box-sizing: border-box;
+  position: fixed;
+}
+.sidebar-brand {
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+.sidebar-nav { display:flex; flex-direction:column; gap:8px }
+.nav-link { color: #cbd5e1; text-decoration:none; padding:8px 10px; border-radius:8px }
+.nav-link:hover { background: rgba(255,255,255,0.04) }
+.nav-link.active { background: #1e293b; color: #fff }
+

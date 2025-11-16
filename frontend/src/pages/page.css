@@ -1,0 +1,17 @@
+.page-root {
+  margin-left: 0;
+  width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+
+.page-root h2 { margin: 0 0 12px 0; }
+.page-root .cards { display: flex; gap: 12px }
+.page-root .card { 
+  flex: 1;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}

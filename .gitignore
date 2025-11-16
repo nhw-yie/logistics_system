@@ -1,0 +1,36 @@
+# Root gitignore for fullstack project
+
+# Node
+node_modules/
+
+# Environment
+.env*
+!.env.example
+/frontend/node_modules/
+/frontend/.env
+# Build
+dist/
+build/
+.next/
+.out/
+
+# Logs
+logs/
+*.log
+
+# Editor
+.vscode/
+.idea/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Cache
+.cache/
+coverage/
+
+# Uploads / Temp
+uploads/
+tmp/
+temp/
