@@ -5,6 +5,7 @@ import './sidebar.css'
 const links = [
   { to: '/dashboard', label: 'Dashboard' },
   { to: '/bando', label: 'Bản Đồ' },
+  { to: '/cungung', label: 'Cung Ứng' },
   { to: '/kho', label: 'Hệ Thống Kho' },
   { to: '/chinhanh', label: 'Chi Nhánh Bán Lẻ' },
   { to: '/lohang', label: 'Lô Hàng' },

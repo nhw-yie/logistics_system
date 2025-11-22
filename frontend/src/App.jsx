@@ -21,7 +21,8 @@ import VanChuyen from './pages/VanChuyen'
 import BaoCao from './pages/BaoCao'
 import NguoiDung from './pages/NguoiDung'
 import LoHang from './pages/LoHang'
-
+import TaoPhieuXuat from './pages/HeThongKho/TaoPhieuXuat'
+import TaoDonDatHang from './pages/HeThongKho/TaoDonDatHang'
 function App() {
   return (
     <BrowserRouter>
@@ -49,6 +50,8 @@ function App() {
               <Route path="/nguoidung" element={<NguoiDung />} />
               <Route path="/kho/them-moi" element={<ThemKho />} />
               <Route path="/lohang" element={<LoHang />} />
+               <Route path="/phieuxuat/tao" element={<TaoPhieuXuat />} />
++              <Route path="/dondathang/tao" element={<TaoDonDatHang />} />
             </Routes>
           </main>
         </div>

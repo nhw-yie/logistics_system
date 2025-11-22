@@ -34,6 +34,14 @@ router.get('/sanpham', (req, res) => {
   queryOrientDB('SELECT * FROM SanPham', res);
 });
 
+// Lookup single product by maSP (fast lookup used by frontend)
+router.get('/sanpham/:maSP', (req, res) => {
+  const { maSP } = req.params;
+  const safe = maSP.replace(/'/g, "\\'");
+  const query = `SELECT maSP, tenSP, donViTinh, giaBan FROM SanPham WHERE maSP = '${safe}' LIMIT 1`;
+  queryOrientDB(query, res);
+});
+
 router.get('/danhmuc', (req, res) => {
   queryOrientDB('SELECT * FROM DanhMuc', res);
 });
@@ -135,6 +143,162 @@ router.get('/phieuxuat', (req, res) => {
   queryOrientDB('SELECT * FROM PhieuXuat', res);
 });
 
+// Endpoint: generate next maPhieu. Format: PXYYYYMMDD-####
+router.get('/phieuxuat/nextMa', async (req, res) => {
+  try {
+    const today = new Date();
+    const prefix = 'PX' + today.toISOString().slice(0, 10).replace(/-/g, '');
+    const sql = `SELECT maPhieu FROM PhieuXuat WHERE maPhieu LIKE '${prefix}-%' ORDER BY maPhieu DESC LIMIT 1`;
+    const q = await queryOrientDBPromise(sql);
+    const last = q && q.length ? q[0].maPhieu : null;
+    let nextNum = 1;
+    if (last) {
+      const m = String(last).match(/-(\d+)$/);
+      if (m) nextNum = parseInt(m[1], 10) + 1;
+    }
+    const nextMa = `${prefix}-${String(nextNum).padStart(4, '0')}`;
+    res.json({ maPhieu: nextMa });
+  } catch (err) {
+    console.error('Error generating next maPhieu', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint: generate next maDon for DonDatHang. Format: DDYYYYMMDD-####
+router.get('/dondathang/nextMa', async (req, res) => {
+  try {
+    const today = new Date();
+    const prefix = 'DD' + today.toISOString().slice(0, 10).replace(/-/g, '');
+    const sql = `SELECT maDon FROM DonDatHang WHERE maDon LIKE '${prefix}-%' ORDER BY maDon DESC LIMIT 1`;
+    const q = await queryOrientDBPromise(sql);
+    const last = q && q.length ? q[0].maDon : null;
+    let nextNum = 1;
+    if (last) {
+      const m = String(last).match(/-(\d+)$/);
+      if (m) nextNum = parseInt(m[1], 10) + 1;
+    }
+    const nextMa = `${prefix}-${String(nextNum).padStart(4, '0')}`;
+    res.json({ maDon: nextMa });
+  } catch (err) {
+    console.error('Error generating next maDon', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+// Create PhieuXuat and decrement stock accordingly
+router.post('/phieuxuat', async (req, res) => {
+  try {
+    const { maPhieu, ngayXuat, kho, xuatDen, chiTiet = [], ghiChu } = req.body;
+
+    const safe = s => (s ? s.replace(/'/g, "\\'") : '');
+
+    // ====== 1) Lấy RID cho kho xuất ======
+    let khoRid = null;
+    if (kho) {
+      const qKho = `
+        SELECT @rid AS rid FROM Kho WHERE maKho='${safe(kho)}'
+      `;
+      const r = await queryOrientDBPromise(qKho);
+      khoRid = r[0]?.rid;
+    }
+
+    // Nếu không tìm thấy → lỗi
+    if (!khoRid) {
+      return res.status(400).json({ error: "Không tìm thấy kho xuất." });
+    }
+
+    // ====== 2) Lấy RID cho nơi xuất đến (kho hoặc chi nhánh) ======
+    let xuatDenRid = null;
+
+    // Thử tìm trong Kho
+    const q1 = `
+      SELECT @rid AS rid FROM Kho WHERE maKho='${safe(xuatDen)}'
+    `;
+    let r1 = await queryOrientDBPromise(q1);
+    if (r1.length > 0) xuatDenRid = r1[0].rid;
+
+    // Nếu chưa có → tìm trong ChiNhanh
+    if (!xuatDenRid) {
+      const q2 = `
+        SELECT @rid AS rid FROM ChiNhanh WHERE maChiNhanh='${safe(xuatDen)}'
+      `;
+      let r2 = await queryOrientDBPromise(q2);
+      if (r2.length > 0) xuatDenRid = r2[0].rid;
+    }
+
+    if (!xuatDenRid) {
+      return res.status(400).json({ error: "Không tìm thấy địa điểm xuatDen." });
+    }
+
+    // ====== 3) Xử lý chi tiết phiếu (embedded list)
+    const chiTietItems = (Array.isArray(chiTiet) ? chiTiet : []).map(item => {
+      const maSP = safe(item.maSP || '');
+      const tenSP = safe(item.tenSP || '');
+      const soLuong = Number(item.soLuong || 0);
+      const donGia = Number(item.donGia || 0);
+      const maLo = safe(item.maLo || '');
+      const thanhTien = Number(item.thanhTien || (soLuong * donGia));
+      return `{maSP:'${maSP}',tenSP:'${tenSP}',soLuong:${soLuong},donGia:${donGia},maLo:'${maLo}',thanhTien:${thanhTien}}`;
+    }).join(',');
+
+    const chiTietEmbedded = `[${chiTietItems}]`;
+
+    // ====== 4) Build câu INSERT với RID ======
+    const parts = [];
+    if (maPhieu) parts.push(`maPhieu='${safe(maPhieu)}'`);
+    if (ngayXuat) parts.push(`ngayXuat=DATE('${safe(ngayXuat)}','yyyy-MM-dd')`);
+    parts.push(`kho=${khoRid}`);
+    parts.push(`xuatDen=${xuatDenRid}`);
+    if (chiTietItems.length) parts.push(`chiTiet=${chiTietEmbedded}`);
+    parts.push(`ghiChu='${safe(ghiChu || '')}'`);
+
+    const insertQuery = `INSERT INTO PhieuXuat SET ${parts.join(',')}`;
+
+    // ====== 5) Insert ======
+    await queryOrientDBPromise(insertQuery);
+
+    // ====== 6) Giảm tồn kho ======
+    for (const item of (Array.isArray(chiTiet) ? chiTiet : [])) {
+      const maSP = safe(item.maSP || '');
+      const qty = Number(item.soLuong || 0);
+      const maLo = safe(item.maLo || '');
+
+      if (!maSP || qty <= 0) continue;
+
+      // 1) Theo lô
+      if (maLo) {
+        const q1 = `
+          UPDATE TonKhoTheoLo 
+          SET soLuongHienTai = soLuongHienTai - ${qty}
+          WHERE loHang.maLo='${maLo}'
+            AND diaDiem=${khoRid}
+          RETURN AFTER
+        `;
+        try { await queryOrientDBPromise(q1); } catch (e) {
+          console.warn('Error updating TonKhoTheoLo', e.message);
+        }
+      }
+
+      // 2) Tổng hợp
+      const q2 = `
+        UPDATE TonKhoTongHop
+        SET tongSoLuong = tongSoLuong - ${qty}
+        WHERE diaDiem=${khoRid}
+          AND sanPham.maSP='${maSP}'
+        RETURN AFTER
+      `;
+      try { await queryOrientDBPromise(q2); } catch (e) {
+        console.warn('Error updating TonKhoTongHop', e.message);
+      }
+    }
+
+    return res.json({ success: true });
+
+  } catch (err) {
+    console.error('Error creating PhieuXuat:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get('/phieuhoan', (req, res) => {
   queryOrientDB('SELECT * FROM PhieuHoan', res);
 });
@@ -164,6 +328,25 @@ router.get('/tuyenduong', (req, res) => {
 // Quan hệ phân phối giữa các kho
 router.get('/phanphoi', (req, res) => {
   queryOrientDB('SELECT * FROM PhanPhoi', res);
+});
+
+// Các địa điểm (kho/chi nhánh) được phân phối từ một kho cụ thể
+router.get('/phanphoi/kho/:maKho', (req, res) => {
+  const { maKho } = req.params;
+  const query = `
+    SELECT
+      in.@class AS loai,
+      in.maKho AS maKho,
+      in.tenKho AS tenKho,
+      in.maChiNhanh AS maChiNhanh,
+      in.tenChiNhanh AS tenChiNhanh,
+      khoangCach,
+      thoiGian,
+      trangThai
+    FROM PhanPhoi
+    WHERE out IN (SELECT FROM Kho WHERE maKho = '${maKho}')
+  `;
+  queryOrientDB(query, res);
 });
 
 // Quan hệ vận chuyển từ NCC đến kho
@@ -943,6 +1126,14 @@ router.get('/lohang/sanpham/:maSP', async (req, res) => {
   }
 });
 
+// GET supplier info for a product (cungUng embedded list)
+router.get('/sanpham/cungung/:maSP', (req, res) => {
+  const { maSP } = req.params;
+  const safe = maSP ? maSP.replace(/'/g, "\\'") : '';
+  const query = `SELECT maSP, tenSP, giaBan, donViTinh, cungUng FROM SanPham WHERE maSP = '${safe}' LIMIT 1`;
+  queryOrientDB(query, res);
+});
+
 // ============================================
 // 7. THỐNG KÊ LÔ HÀNG THEO TRẠNG THÁI
 // ============================================
@@ -1553,4 +1744,25 @@ router.get('/sanpham/chinhanh/:maChiNhanh/timkiem/:keyword', (req, res) => {
   `;
   queryOrientDB(query, res);
 });
+
+
+//--------------------------------------------------------------------------------------------------
+//-----------------  CUNG ỨNG - SẢN PHẨM- NHÀ CUNG CẤP ---------------------------------------------
+//--------------------------------------------------------------------------------------------------
+
+router.get('/sanpham/cungung/:maSP', (req, res) => {
+  const { maSP } = req.params;
+  const safe = maSP ? maSP.replace(/'/g, "\\'") : '';
+  const query = `SELECT maSP, tenSP, giaBan, donViTinh, cungUng FROM SanPham WHERE maSP = '${safe}' LIMIT 1`;
+  queryOrientDB(query, res);
+});
+
+router.get('/nhacungcap/:maNCC', (req, res) => {
+  const { maNCC } = req.params;
+  const safe = maNCC ? maNCC.replace(/'/g, "\\'") : '';
+  const query = `SELECT * FROM NhaCungCap WHERE maNCC = '${safe}' LIMIT 1`;
+  queryOrientDB(query, res);
+});
+
+
 module.exports = router;

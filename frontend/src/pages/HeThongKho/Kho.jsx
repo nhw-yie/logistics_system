@@ -29,6 +29,15 @@ const Kho = () => {
     fetchKhoData();
     fetchLoaiHang();
   }, []);
+  const handleCreatePhieuXuat = () => {
+    if (!selectedKho) return;
+    navigate('/phieuxuat/tao', { state: { kho: selectedKho } });
+  };
+
+  const handleCreateDonDatHang = () => {
+    if (!selectedKho) return;
+    navigate('/dondathang/tao', { state: { kho: selectedKho } });
+  };
 
   const fetchKhoData = async () => {
     try {
@@ -525,6 +534,23 @@ const Kho = () => {
           <div className="kho-detail-section">
             <div className="detail-header">
               <h2>Chi tiết Kho: {selectedKho.tenKho}</h2>
+               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button 
+                className="btn-action btn-primary"
+                onClick={handleCreatePhieuXuat}
+                title="Tạo Phiếu Xuất từ kho này"
+              >
+                ➤ Tạo phiếu xuất
+              </button>
+
+              <button 
+                className="btn-action btn-primary"
+                onClick={handleCreateDonDatHang}
+                title="Tạo Đơn Đặt Hàng cho kho này"
+              >
+                🛒 Tạo đơn đặt hàng
+              </button>
+
               <button 
                 className="btn-close"
                 onClick={() => setSelectedKho(null)}
@@ -533,13 +559,15 @@ const Kho = () => {
               </button>
             </div>
 
+          </div>
+
             {detailLoading ? (
               <div className="loading">
                 <div className="spinner"></div>
                 Đang tải chi tiết kho...
               </div>
             ) : (
-              <>
+              <div className="detail-body">
                 <div className="kho-info-section">
                   <h3>Thông tin Kho</h3>
                   <div className="info-grid">
@@ -570,7 +598,6 @@ const Kho = () => {
                     </div>
                   </div>
                 </div>
-
               <div className="detail-section">
   <h3>Khu Kho ({selectedKhuKhoData.length})</h3>
   {selectedKhuKhoData.length > 0 ? (
@@ -600,7 +627,7 @@ const Kho = () => {
                   🗑️
                 </button>
               </div>
-            </div>
+            
             <div className="khukho-body">
               <p><strong>Mã khu:</strong> {khu.maKhu}</p>
               <p><strong>Loại hàng:</strong> {khu.tenLoaiHang || 'Không xác định'}</p>
@@ -619,6 +646,7 @@ const Kho = () => {
               {khu.loaiHang?.YC_NhietDo && (
                 <p><strong>Yêu cầu:</strong> {khu.loaiHang.YC_NhietDo}</p>
               )}
+            </div>
             </div>
           </div>
         );
@@ -875,7 +903,7 @@ const Kho = () => {
                     )
                   )}
                 </div>
-              </>
+              </div>
             )}
           </div>
         )}
