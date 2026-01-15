@@ -7,11 +7,6 @@ console.log('[frontend] DEV=', IS_DEV, 'API_BASE =', API_BASE);
 /* eslint-enable no-console */
 
 
-
-
-
-
-
 async function handleResponse(res) {
   if (!res.ok) {
     const text = await res.text().catch(() => '');

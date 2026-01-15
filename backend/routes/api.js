@@ -1764,5 +1764,873 @@ router.get('/nhacungcap/:maNCC', (req, res) => {
   queryOrientDB(query, res);
 });
 
+// 5️⃣ Lấy danh sách kho (để hiển thị trong dropdown khi thêm/sửa)
+router.get('/kho/danh-sach', (req, res) => {
+  const query = `
+    SELECT 
+  maKho,
+  tenKho,
+  loaiKho,
+  diaChi,
+  trangThai,
+  map(loaiKho,
+    'kho_chinh', 1,
+    'kho_vung', 2,
+    'kho_hau_can', 3,
+    4
+  ) AS sortOrder
+FROM Kho
+WHERE trangThai = 'hoạt_động'
+ORDER BY sortOrder ASC, tenKho ASC;
 
+  `;
+  queryOrientDB(query, res);
+});
+// 6️⃣ Tìm kiếm sản phẩm (để thêm vào nhà cung cấp)
+router.get('/sanpham/tim-kiem', async (req, res) => {
+  const { keyword = '' } = req.query;
+  const safe = keyword.replace(/'/g, "\\'");
+  const query = `
+    SELECT 
+      maSP, 
+      tenSP, 
+      donViTinh, 
+      giaBan,
+      danhMuc.tenDanhMuc as tenDanhMuc,
+      loaiHang.tenLoai as tenLoaiHang
+    FROM SanPham 
+    WHERE tenSP.toLowerCase() LIKE '%${safe.toLowerCase()}%' 
+       OR maSP.toLowerCase() LIKE '%${safe.toLowerCase()}%'
+    ORDER BY tenSP ASC
+    LIMIT 50
+  `;
+  queryOrientDB(query, res);
+});
+
+// 7️⃣ Lấy thống kê tổng quan
+router.get('/nhacungcap/thong-ke', async (req, res) => {
+  const query = `
+    SELECT 
+      COUNT(*) as tongNCC,
+      COUNT(*)[trangThai = 'hoạt_động'] as nccHoatDong,
+      COUNT(*)[trangThai = 'ngừng_hợp_tác'] as nccNgungHopTac
+    FROM NhaCungCap
+  `;
+  queryOrientDB(query, res);
+});
+
+// 8️⃣ Lấy ma trận nhà cung cấp - kho (để hiển thị bảng quan hệ)
+router.get('/nhacungcap/ma-tran-kho', async (req, res) => {
+  const query = `
+    SELECT 
+      maNCC,
+      tenNCC,
+      out('SHIPS_TO').maKho as danhSachKho
+    FROM NhaCungCap
+    ORDER BY tenNCC ASC
+  `;
+  queryOrientDB(query, res);
+});
+
+// 9️⃣ Kiểm tra nhà cung cấp có cung cấp cho kho nào không
+router.get('/nhacungcap/:maNCC/kho/:maKho/kiem-tra', async (req, res) => {
+  const { maNCC, maKho } = req.params;
+  const safeMaNCC = maNCC.replace(/'/g, "\\'");
+  const safeMaKho = maKho.replace(/'/g, "\\'");
+  const query = `
+    SELECT 
+      outE('SHIPS_TO')[in.maKho = '${safeMaKho}'].size() > 0 as daLienKet,
+      outE('SHIPS_TO')[in.maKho = '${safeMaKho}'].khoangCach as khoangCach,
+      outE('SHIPS_TO')[in.maKho = '${safeMaKho}'].thoiGianCho as thoiGianCho,
+      outE('SHIPS_TO')[in.maKho = '${safeMaKho}'].phiVanChuyen as phiVanChuyen,
+      outE('SHIPS_TO')[in.maKho = '${safeMaKho}'].tanSuat as tanSuat,
+      outE('SHIPS_TO')[in.maKho = '${safeMaKho}'].trangThai as trangThai
+    FROM NhaCungCap 
+    WHERE maNCC = '${safeMaNCC}'
+  `;
+  queryOrientDB(query, res);
+});
+
+// 🔟 Lấy danh sách nhà cung cấp theo kho
+router.get('/kho/:maKho/nhacungcap', async (req, res) => {
+  const { maKho } = req.params;
+  const safe = maKho.replace(/'/g, "\\'");
+  const query = `
+    SELECT 
+      in('SHIPS_TO').maNCC as maNCC,
+      in('SHIPS_TO').tenNCC as tenNCC,
+      in('SHIPS_TO').trangThai as trangThai,
+      inE('SHIPS_TO').khoangCach as khoangCach,
+      inE('SHIPS_TO').thoiGianCho as thoiGianCho,
+      inE('SHIPS_TO').phiVanChuyen as phiVanChuyen,
+      inE('SHIPS_TO').tanSuat as tanSuat
+    FROM Kho 
+    WHERE maKho = '${safe}'
+    UNWIND in('SHIPS_TO'), inE('SHIPS_TO')
+  `;
+  queryOrientDB(query, res);
+});
+
+// ======================
+//  API POST/PUT/DELETE
+// ======================
+
+// ➕ Thêm nhà cung cấp mới
+router.post('/nhacungcap', async (req, res) => {
+  try {
+    const { maNCC, tenNCC, diaChi, lienHe, trangThai, ngayHopTac } = req.body;
+    
+    const query = `
+      INSERT INTO NhaCungCap 
+      SET 
+        maNCC = '${maNCC}',
+        tenNCC = '${tenNCC}',
+        diaChi = ${JSON.stringify(diaChi)},
+        lienHe = ${JSON.stringify(lienHe)},
+        trangThai = '${trangThai || 'hoạt_động'}',
+        ngayHopTac = date('${ngayHopTac}')
+    `;
+    
+    const response = await db.post(`/command/${DB_NAME}/sql`, {
+      command: query
+    });
+    
+    res.json({
+      success: true,
+      message: 'Thêm nhà cung cấp thành công',
+      data: response.data.result
+    });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi thêm nhà cung cấp',
+      error: err.message
+    });
+  }
+});
+
+// ✏️ Cập nhật thông tin nhà cung cấp
+router.put('/nhacungcap/:maNCC', async (req, res) => {
+  try {
+    const { maNCC } = req.params;
+    const { tenNCC, diaChi, lienHe, trangThai } = req.body;
+    
+    const safe = maNCC.replace(/'/g, "\\'");
+    const query = `
+      UPDATE NhaCungCap 
+      SET 
+        tenNCC = '${tenNCC}',
+        diaChi = ${JSON.stringify(diaChi)},
+        lienHe = ${JSON.stringify(lienHe)},
+        trangThai = '${trangThai}'
+      WHERE maNCC = '${safe}'
+      RETURN AFTER
+    `;
+    
+    const response = await db.post(`/command/${DB_NAME}/sql`, {
+      command: query
+    });
+    
+    res.json({
+      success: true,
+      message: 'Cập nhật nhà cung cấp thành công',
+      data: response.data.result
+    });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi cập nhật nhà cung cấp',
+      error: err.message
+    });
+  }
+});
+
+// ➕ Thêm cạnh SHIPS_TO (liên kết NCC với Kho)
+router.post('/nhacungcap/:maNCC/kho/:maKho', async (req, res) => {
+  try {
+    const { maNCC, maKho } = req.params;
+    const { khoangCach, thoiGianCho, phiVanChuyen, tanSuat, trangThai } = req.body;
+    
+    const safeMaNCC = maNCC.replace(/'/g, "\\'");
+    const safeMaKho = maKho.replace(/'/g, "\\'");
+    
+    const query = `
+      CREATE EDGE SHIPS_TO 
+      FROM (SELECT FROM NhaCungCap WHERE maNCC = '${safeMaNCC}')
+      TO (SELECT FROM Kho WHERE maKho = '${safeMaKho}')
+      SET 
+        khoangCach = ${khoangCach},
+        thoiGianCho = ${thoiGianCho},
+        phiVanChuyen = ${phiVanChuyen},
+        tanSuat = '${tanSuat}',
+        trangThai = '${trangThai || 'hoạt_động'}'
+    `;
+    
+    const response = await db.post(`/command/${DB_NAME}/sql`, {
+      command: query
+    });
+    
+    res.json({
+      success: true,
+      message: 'Liên kết nhà cung cấp với kho thành công',
+      data: response.data.result
+    });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi liên kết nhà cung cấp với kho',
+      error: err.message
+    });
+  }
+});
+
+// ✏️ Cập nhật thông tin SHIPS_TO
+router.put('/nhacungcap/:maNCC/kho/:maKho', async (req, res) => {
+  try {
+    const { maNCC, maKho } = req.params;
+    const { khoangCach, thoiGianCho, phiVanChuyen, tanSuat, trangThai } = req.body;
+    
+    const safeMaNCC = maNCC.replace(/'/g, "\\'");
+    const safeMaKho = maKho.replace(/'/g, "\\'");
+    
+    const query = `
+      UPDATE EDGE SHIPS_TO 
+      SET 
+        khoangCach = ${khoangCach},
+        thoiGianCho = ${thoiGianCho},
+        phiVanChuyen = ${phiVanChuyen},
+        tanSuat = '${tanSuat}',
+        trangThai = '${trangThai}'
+      WHERE 
+        out.maNCC = '${safeMaNCC}' 
+        AND in.maKho = '${safeMaKho}'
+      RETURN AFTER
+    `;
+    
+    const response = await db.post(`/command/${DB_NAME}/sql`, {
+      command: query
+    });
+    
+    res.json({
+      success: true,
+      message: 'Cập nhật thông tin giao hàng thành công',
+      data: response.data.result
+    });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi cập nhật thông tin giao hàng',
+      error: err.message
+    });
+  }
+});
+
+// 🗑️ Xóa cạnh SHIPS_TO
+router.delete('/nhacungcap/:maNCC/kho/:maKho', async (req, res) => {
+  try {
+    const { maNCC, maKho } = req.params;
+    const safeMaNCC = maNCC.replace(/'/g, "\\'");
+    const safeMaKho = maKho.replace(/'/g, "\\'");
+    
+    const query = `
+      DELETE EDGE SHIPS_TO 
+      WHERE 
+        out.maNCC = '${safeMaNCC}' 
+        AND in.maKho = '${safeMaKho}'
+    `;
+    
+    await db.post(`/command/${DB_NAME}/sql`, {
+      command: query
+    });
+    
+    res.json({
+      success: true,
+      message: 'Xóa liên kết nhà cung cấp với kho thành công'
+    });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi xóa liên kết',
+      error: err.message
+    });
+  }
+});
+
+// ➕ Thêm sản phẩm vào nhà cung cấp (cập nhật embedded list cungUng)
+router.post('/nhacungcap/:maNCC/sanpham/:maSP', async (req, res) => {
+  try {
+    const { maNCC, maSP } = req.params;
+    const { giaNhap } = req.body;
+    
+    const safeMaNCC = maNCC.replace(/'/g, "\\'");
+    const safeMaSP = maSP.replace(/'/g, "\\'");
+    
+    const query = `
+      UPDATE SanPham 
+      SET cungUng = cungUng || {
+        'nhaCungCap': (SELECT FROM NhaCungCap WHERE maNCC = '${safeMaNCC}'),
+        'giaNhap': ${giaNhap},
+        'thoiGianCapNhat': sysdate()
+      }
+      WHERE maSP = '${safeMaSP}'
+      RETURN AFTER
+    `;
+    
+    const response = await db.post(`/command/${DB_NAME}/sql`, {
+      command: query
+    });
+    
+    res.json({
+      success: true,
+      message: 'Thêm sản phẩm vào nhà cung cấp thành công',
+      data: response.data.result
+    });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi thêm sản phẩm vào nhà cung cấp',
+      error: err.message
+    });
+  }
+});
+
+// ✏️ Cập nhật giá nhập của sản phẩm từ nhà cung cấp
+router.put('/nhacungcap/:maNCC/sanpham/:maSP', async (req, res) => {
+  try {
+    const { maNCC, maSP } = req.params;
+    const { giaNhap } = req.body;
+    
+    const safeMaNCC = maNCC.replace(/'/g, "\\'");
+    const safeMaSP = maSP.replace(/'/g, "\\'");
+    
+    // OrientDB không hỗ trợ cập nhật trực tiếp element trong embedded list
+    // Cần lấy ra, sửa, và set lại
+    const query = `
+      UPDATE SanPham 
+      SET cungUng = cungUng.exclude(cungUng[nhaCungCap.maNCC = '${safeMaNCC}'])
+                     .include({
+                       'nhaCungCap': (SELECT FROM NhaCungCap WHERE maNCC = '${safeMaNCC}'),
+                       'giaNhap': ${giaNhap},
+                       'thoiGianCapNhat': sysdate()
+                     })
+      WHERE maSP = '${safeMaSP}'
+      RETURN AFTER
+    `;
+    
+    const response = await db.post(`/command/${DB_NAME}/sql`, {
+      command: query
+    });
+    
+    res.json({
+      success: true,
+      message: 'Cập nhật giá nhập thành công',
+      data: response.data.result
+    });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi cập nhật giá nhập',
+      error: err.message
+    });
+  }
+});
+
+// 🗑️ Xóa sản phẩm khỏi nhà cung cấp
+router.delete('/nhacungcap/:maNCC/sanpham/:maSP', async (req, res) => {
+  try {
+    const { maNCC, maSP } = req.params;
+    const safeMaNCC = maNCC.replace(/'/g, "\\'");
+    const safeMaSP = maSP.replace(/'/g, "\\'");
+    
+    const query = `
+      UPDATE SanPham 
+      SET cungUng = cungUng.exclude(cungUng[nhaCungCap.maNCC = '${safeMaNCC}'])
+      WHERE maSP = '${safeMaSP}'
+      RETURN AFTER
+    `;
+    
+    const response = await db.post(`/command/${DB_NAME}/sql`, {
+      command: query
+    });
+    
+    res.json({
+      success: true,
+      message: 'Xóa sản phẩm khỏi nhà cung cấp thành công',
+      data: response.data.result
+    });
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    res.status(500).json({
+      success: false,
+      message: 'Lỗi khi xóa sản phẩm',
+      error: err.message
+    });
+  }
+});
+
+
+// 3️⃣ Lấy danh sách sản phẩm của 1 nhà cung cấp
+router.get('/nhacungcap/:maNCC/sanpham', async (req, res) => {
+  const { maNCC } = req.params;
+  const safe = maNCC.replace(/'/g, "\\'");
+  const query = `
+    SELECT 
+      maSP, 
+      tenSP, 
+      donViTinh, 
+      giaBan,
+      danhMuc.tenDanhMuc as tenDanhMuc,
+      loaiHang.tenLoai as tenLoaiHang,
+      cungUng[nhaCungCap.maNCC = '${safe}'].giaNhap as giaNhap,
+      cungUng[nhaCungCap.maNCC = '${safe}'].thoiGianCapNhat as thoiGianCapNhat
+    FROM SanPham 
+    WHERE cungUng.nhaCungCap.maNCC CONTAINS '${safe}'
+    ORDER BY tenSP ASC
+  `;
+  queryOrientDB(query, res);
+});
+
+// 4️⃣ Lấy danh sách kho mà nhà cung cấp giao hàng tới (qua cạnh SHIPS_TO)
+router.get('/nhacungcap/:maNCC/kho', async (req, res) => {
+  const { maNCC } = req.params;
+  const safe = maNCC.replace(/'/g, "\\'");
+  const query = `
+    SELECT 
+    khoangCach,
+    thoiGianCho,
+    phiVanChuyen,
+    tanSuat,
+    trangThai,
+    in.maKho AS maKho,
+    in.tenKho AS tenKho
+FROM (
+    SELECT expand(outE('SHIPS_TO')) FROM NhaCungCap WHERE maNCC='${safe}'
+);
+
+
+  `;
+  queryOrientDB(query, res);
+});
+
+
+// ============================================
+// API BÁO CÁO & THỐNG KÊ
+// ============================================
+
+// 1️⃣ Báo cáo tổng quan theo thời gian
+// ============================================
+// API BÁO CÁO & THỐNG KÊ (FIXED)
+// ============================================
+
+// 1️⃣ Báo cáo tổng quan theo thời gian
+router.get('/baocao/tong-quan', async (req, res) => {
+  try {
+    const { tuNgay, denNgay } = req.query;
+    
+    const query = `
+      SELECT 
+        (SELECT COUNT(*) FROM PhieuNhap 
+         WHERE ngayNhap >= date('${tuNgay}') AND ngayNhap <= date('${denNgay}')) as soPhieuNhap,
+        (SELECT COUNT(*) FROM PhieuXuat 
+         WHERE ngayXuat >= date('${tuNgay}') AND ngayXuat <= date('${denNgay}')) as soPhieuXuat,
+        (SELECT SUM(tongTien) FROM DonDatHang 
+         WHERE ngayLap >= date('${tuNgay}') AND ngayLap <= date('${denNgay}')) as tongGiaTriDonHang,
+        (SELECT COUNT(*) FROM LoHang 
+         WHERE trangThai = 'can_date') as soLoCanDate,
+        (SELECT SUM(tongSoLuong) FROM TonKhoTongHop) as tongTonKho
+    `;
+    
+    queryOrientDB(query, res);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2️⃣ Báo cáo phiếu nhập theo thời gian
+router.get('/baocao/phieu-nhap', async (req, res) => {
+  try {
+    const { tuNgay, denNgay, groupBy = 'ngay' } = req.query;
+    
+    let dateFormat;
+    switch(groupBy) {
+      case 'tuan':
+        dateFormat = "format(ngayNhap, 'yyyy-ww')";
+        break;
+      case 'thang':
+        dateFormat = "format(ngayNhap, 'yyyy-MM')";
+        break;
+      case 'nam':
+        dateFormat = "format(ngayNhap, 'yyyy')";
+        break;
+      default:
+        dateFormat = "format(ngayNhap, 'yyyy-MM-dd')";
+    }
+    
+    const query = `
+      SELECT 
+        ${dateFormat} as thoiGian,
+        kho.tenKho as tenKho,
+        kho.maKho as maKho,
+        COUNT(*) as soPhieu
+      FROM PhieuNhap
+      WHERE ngayNhap >= date('${tuNgay}') AND ngayNhap <= date('${denNgay}')
+      GROUP BY thoiGian, kho.tenKho, kho.maKho
+      ORDER BY thoiGian ASC
+    `;
+    
+    queryOrientDB(query, res);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3️⃣ Báo cáo phiếu xuất theo thời gian
+router.get('/baocao/phieu-xuat', async (req, res) => {
+  try {
+    const { tuNgay, denNgay, groupBy = 'ngay' } = req.query;
+    
+    let dateFormat;
+    switch(groupBy) {
+      case 'tuan':
+        dateFormat = "format(ngayXuat, 'yyyy-ww')";
+        break;
+      case 'thang':
+        dateFormat = "format(ngayXuat, 'yyyy-MM')";
+        break;
+      case 'nam':
+        dateFormat = "format(ngayXuat, 'yyyy')";
+        break;
+      default:
+        dateFormat = "format(ngayXuat, 'yyyy-MM-dd')";
+    }
+    
+    const query = `
+      SELECT 
+        ${dateFormat} as thoiGian,
+        kho.tenKho as tenKho,
+        kho.maKho as maKho,
+        COUNT(*) as soPhieu
+      FROM PhieuXuat
+      WHERE ngayXuat >= date('${tuNgay}') AND ngayXuat <= date('${denNgay}')
+      GROUP BY thoiGian, kho.tenKho, kho.maKho
+      ORDER BY thoiGian ASC
+    `;
+    
+    queryOrientDB(query, res);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4️⃣ Chi tiết phiếu nhập theo sản phẩm
+router.get('/baocao/phieu-nhap/san-pham', async (req, res) => {
+  try {
+    const { tuNgay, denNgay } = req.query;
+    
+    const query = `
+      SELECT 
+        maPhieu,
+        ngayNhap,
+        kho.tenKho as tenKho,
+        chiTiet
+      FROM PhieuNhap 
+      WHERE ngayNhap >= date('${tuNgay}') AND ngayNhap <= date('${denNgay}')
+      ORDER BY ngayNhap DESC
+    `;
+    
+    const result = await queryOrientDBPromise(query);
+    
+    // Flatten chiTiet array
+    const flattened = [];
+    result.forEach(phieu => {
+      if (phieu.chiTiet && Array.isArray(phieu.chiTiet)) {
+        phieu.chiTiet.forEach(ct => {
+          flattened.push({
+            maPhieu: phieu.maPhieu,
+            ngayNhap: phieu.ngayNhap,
+            tenKho: phieu.tenKho,
+            maSP: ct.maSP,
+            tenSP: ct.tenSP,
+            soLuong: ct.soLuong,
+            donGia: ct.donGia,
+            thanhTien: ct.thanhTien
+          });
+        });
+      }
+    });
+    
+    res.json(flattened);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5️⃣ Chi tiết phiếu xuất theo sản phẩm
+router.get('/baocao/phieu-xuat/san-pham', async (req, res) => {
+  try {
+    const { tuNgay, denNgay } = req.query;
+    
+    const query = `
+      SELECT 
+        maPhieu,
+        ngayXuat,
+        kho.tenKho as tenKho,
+        CASE 
+          WHEN xuatDen.@class = 'Kho' THEN xuatDen.tenKho
+          WHEN xuatDen.@class = 'ChiNhanh' THEN xuatDen.tenChiNhanh
+          ELSE ''
+        END as diemDen,
+        chiTiet
+      FROM PhieuXuat 
+      WHERE ngayXuat >= date('${tuNgay}') AND ngayXuat <= date('${denNgay}')
+      ORDER BY ngayXuat DESC
+    `;
+    
+    const result = await queryOrientDBPromise(query);
+    
+    // Flatten chiTiet array
+    const flattened = [];
+    result.forEach(phieu => {
+      if (phieu.chiTiet && Array.isArray(phieu.chiTiet)) {
+        phieu.chiTiet.forEach(ct => {
+          flattened.push({
+            maPhieu: phieu.maPhieu,
+            ngayXuat: phieu.ngayXuat,
+            tenKho: phieu.tenKho,
+            diemDen: phieu.diemDen,
+            maSP: ct.maSP,
+            tenSP: ct.tenSP,
+            soLuong: ct.soLuong,
+            donGia: ct.donGia,
+            thanhTien: ct.thanhTien
+          });
+        });
+      }
+    });
+    
+    res.json(flattened);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 6️⃣ Top sản phẩm nhập nhiều nhất
+router.get('/baocao/top-san-pham-nhap', async (req, res) => {
+  try {
+    const { tuNgay, denNgay, limit = 10 } = req.query;
+    
+    const query = `
+      SELECT 
+        maPhieu,
+        ngayNhap,
+        chiTiet
+      FROM PhieuNhap 
+      WHERE ngayNhap >= date('${tuNgay}') AND ngayNhap <= date('${denNgay}')
+    `;
+    
+    const result = await queryOrientDBPromise(query);
+    
+    // Aggregate by product
+    const productMap = {};
+    result.forEach(phieu => {
+      if (phieu.chiTiet && Array.isArray(phieu.chiTiet)) {
+        phieu.chiTiet.forEach(ct => {
+          if (!productMap[ct.maSP]) {
+            productMap[ct.maSP] = {
+              maSP: ct.maSP,
+              tenSP: ct.tenSP,
+              donViTinh: ct.donViTinh || 'kg',
+              tongSoLuong: 0,
+              soLanNhap: 0,
+              tongGiaTri: 0
+            };
+          }
+          productMap[ct.maSP].tongSoLuong += ct.soLuong || 0;
+          productMap[ct.maSP].soLanNhap += 1;
+          productMap[ct.maSP].tongGiaTri += (ct.soLuong || 0) * (ct.donGia || 0);
+        });
+      }
+    });
+    
+    // Calculate average and sort
+    const products = Object.values(productMap)
+      .map(p => ({
+        ...p,
+        giaTrungBinh: p.soLanNhap > 0 ? p.tongGiaTri / p.tongSoLuong : 0
+      }))
+      .sort((a, b) => b.tongSoLuong - a.tongSoLuong)
+      .slice(0, parseInt(limit));
+    
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 7️⃣ Top sản phẩm xuất nhiều nhất
+router.get('/baocao/top-san-pham-xuat', async (req, res) => {
+  try {
+    const { tuNgay, denNgay, limit = 10 } = req.query;
+    
+    const query = `
+      SELECT 
+        maPhieu,
+        ngayXuat,
+        chiTiet
+      FROM PhieuXuat 
+      WHERE ngayXuat >= date('${tuNgay}') AND ngayXuat <= date('${denNgay}')
+    `;
+    
+    const result = await queryOrientDBPromise(query);
+    
+    // Aggregate by product
+    const productMap = {};
+    result.forEach(phieu => {
+      if (phieu.chiTiet && Array.isArray(phieu.chiTiet)) {
+        phieu.chiTiet.forEach(ct => {
+          if (!productMap[ct.maSP]) {
+            productMap[ct.maSP] = {
+              maSP: ct.maSP,
+              tenSP: ct.tenSP,
+              donViTinh: ct.donViTinh || 'kg',
+              tongSoLuong: 0,
+              soLanXuat: 0,
+              tongGiaTri: 0
+            };
+          }
+          productMap[ct.maSP].tongSoLuong += ct.soLuong || 0;
+          productMap[ct.maSP].soLanXuat += 1;
+          productMap[ct.maSP].tongGiaTri += (ct.soLuong || 0) * (ct.donGia || 0);
+        });
+      }
+    });
+    
+    // Calculate average and sort
+    const products = Object.values(productMap)
+      .map(p => ({
+        ...p,
+        giaTrungBinh: p.soLanXuat > 0 ? p.tongGiaTri / p.tongSoLuong : 0
+      }))
+      .sort((a, b) => b.tongSoLuong - a.tongSoLuong)
+      .slice(0, parseInt(limit));
+    
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8️⃣ Báo cáo xuất nhập tồn
+router.get('/baocao/xuat-nhap-ton', async (req, res) => {
+  try {
+    const { tuNgay, denNgay, maKho } = req.query;
+    
+    // Get all products
+    let productsQuery = 'SELECT maSP, tenSP, donViTinh FROM SanPham ORDER BY tenSP ASC';
+    const products = await queryOrientDBPromise(productsQuery);
+    
+    // Get phieu nhap
+    let phieuNhapQuery = `SELECT chiTiet FROM PhieuNhap WHERE ngayNhap >= date('${tuNgay}') AND ngayNhap <= date('${denNgay}')`;
+    if (maKho) phieuNhapQuery += ` AND kho.maKho = '${maKho}'`;
+    const phieuNhap = await queryOrientDBPromise(phieuNhapQuery);
+    
+    // Get phieu xuat
+    let phieuXuatQuery = `SELECT chiTiet FROM PhieuXuat WHERE ngayXuat >= date('${tuNgay}') AND ngayXuat <= date('${denNgay}')`;
+    if (maKho) phieuXuatQuery += ` AND kho.maKho = '${maKho}'`;
+    const phieuXuat = await queryOrientDBPromise(phieuXuatQuery);
+    
+    // Get ton kho
+    let tonKhoQuery = 'SELECT sanPham.maSP as maSP, tongSoLuong FROM TonKhoTongHop WHERE tongSoLuong > 0';
+    if (maKho) tonKhoQuery += ` AND diaDiem.maKho = '${maKho}'`;
+    const tonKho = await queryOrientDBPromise(tonKhoQuery);
+    
+    // Aggregate data
+    const nhapMap = {};
+    phieuNhap.forEach(p => {
+      if (p.chiTiet) {
+        p.chiTiet.forEach(ct => {
+          nhapMap[ct.maSP] = (nhapMap[ct.maSP] || 0) + (ct.soLuong || 0);
+        });
+      }
+    });
+    
+    const xuatMap = {};
+    phieuXuat.forEach(p => {
+      if (p.chiTiet) {
+        p.chiTiet.forEach(ct => {
+          xuatMap[ct.maSP] = (xuatMap[ct.maSP] || 0) + (ct.soLuong || 0);
+        });
+      }
+    });
+    
+    const tonMap = {};
+    tonKho.forEach(t => {
+      tonMap[t.maSP] = (tonMap[t.maSP] || 0) + (t.tongSoLuong || 0);
+    });
+    
+    // Build result
+    const result = products
+      .filter(p => nhapMap[p.maSP] || xuatMap[p.maSP] || tonMap[p.maSP])
+      .map(p => ({
+        maSP: p.maSP,
+        tenSP: p.tenSP,
+        donViTinh: p.donViTinh,
+        soLuongNhap: nhapMap[p.maSP] || 0,
+        soLuongXuat: xuatMap[p.maSP] || 0,
+        tonHienTai: tonMap[p.maSP] || 0
+      }));
+    
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 9️⃣ Báo cáo theo kho
+router.get('/baocao/theo-kho', async (req, res) => {
+  try {
+    const { tuNgay, denNgay } = req.query;
+    
+    const khoQuery = `SELECT maKho, tenKho, loaiKho FROM Kho WHERE trangThai = 'hoạt_động' ORDER BY tenKho ASC`;
+    const khoList = await queryOrientDBPromise(khoQuery);
+    
+    const phieuNhapQuery = `SELECT kho.maKho as maKho, COUNT(*) as soPhieu FROM PhieuNhap WHERE ngayNhap >= date('${tuNgay}') AND ngayNhap <= date('${denNgay}') GROUP BY kho.maKho`;
+    const phieuNhap = await queryOrientDBPromise(phieuNhapQuery);
+    
+    const phieuXuatQuery = `SELECT kho.maKho as maKho, COUNT(*) as soPhieu FROM PhieuXuat WHERE ngayXuat >= date('${tuNgay}') AND ngayXuat <= date('${denNgay}') GROUP BY kho.maKho`;
+    const phieuXuat = await queryOrientDBPromise(phieuXuatQuery);
+    
+    const tonKhoQuery = `SELECT diaDiem.maKho as maKho, SUM(tongSoLuong) as tongTon FROM TonKhoTongHop WHERE diaDiem.@class = 'Kho' GROUP BY diaDiem.maKho`;
+    const tonKho = await queryOrientDBPromise(tonKhoQuery);
+    
+    const nhapMap = {};
+    phieuNhap.forEach(p => { nhapMap[p.maKho] = p.soPhieu; });
+    
+    const xuatMap = {};
+    phieuXuat.forEach(p => { xuatMap[p.maKho] = p.soPhieu; });
+    
+    const tonMap = {};
+    tonKho.forEach(t => { tonMap[t.maKho] = t.tongTon; });
+    
+    const result = khoList.map(k => ({
+      maKho: k.maKho,
+      tenKho: k.tenKho,
+      loaiKho: k.loaiKho,
+      soPhieuNhap: nhapMap[k.maKho] || 0,
+      soPhieuXuat: xuatMap[k.maKho] || 0,
+      tonHienTai: tonMap[k.maKho] || 0
+    }));
+    
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 module.exports = router;

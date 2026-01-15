@@ -18,11 +18,13 @@ import NhanVien from './pages/NhanVien'
 import TaiXe from './pages/TaiXe'
 import XeTai from './pages/XeTai'
 import VanChuyen from './pages/VanChuyen'
-import BaoCao from './pages/BaoCao'
+import ReportPage from './pages/ReportPage'
 import NguoiDung from './pages/NguoiDung'
 import LoHang from './pages/LoHang'
 import TaoPhieuXuat from './pages/HeThongKho/TaoPhieuXuat'
 import TaoDonDatHang from './pages/HeThongKho/TaoDonDatHang'
+import NhaCungCapList from './pages/CungUng/NhaCungCapList'
+import NhaCungCapDetail from './pages/CungUng/NhaCungCapDetail'
 function App() {
   return (
     <BrowserRouter>
@@ -42,16 +44,18 @@ function App() {
               <Route path="/tonkho" element={<TonKho />} />
               <Route path="/phieunhapkho" element={<PhieuNhapKho />} />
               <Route path="/phieuxuatkho" element={<PhieuXuatKho />} />
+              <Route path="/cungung" element={<NhaCungCapList />} />
               <Route path="/nhanvien" element={<NhanVien />} />
               <Route path="/taixe" element={<TaiXe />} />
               <Route path="/xetai" element={<XeTai />} />
+               <Route path="/nha-cung-cap/:maNCC" element={<NhaCungCapDetail />} />
               <Route path="/vanchuyen" element={<VanChuyen />} />
-              <Route path="/baocao" element={<BaoCao />} />
+              <Route path="/baocao" element={<ReportPage />} />
               <Route path="/nguoidung" element={<NguoiDung />} />
               <Route path="/kho/them-moi" element={<ThemKho />} />
               <Route path="/lohang" element={<LoHang />} />
                <Route path="/phieuxuat/tao" element={<TaoPhieuXuat />} />
-+              <Route path="/dondathang/tao" element={<TaoDonDatHang />} />
+              <Route path="/dondathang/tao" element={<TaoDonDatHang />} />
             </Routes>
           </main>
         </div>
